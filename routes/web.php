@@ -20,6 +20,11 @@ Route::name('filament.')
                             $action = filament('filament-breezy')->getTwoFactorRouteAction();
 
                             Route::get($route, $action)->name('auth.two-factor');
+
+                            $route = $hasTenancy ? '/{tenant}/setup-two-factor-authentication' : '/setup-two-factor-authentication';
+                            $action = filament('filament-breezy')->getSetupTwoFactorRouteAction();
+
+                            Route::get($route, $action)->name('auth.setup-two-factor');
                         }
                     });
             }

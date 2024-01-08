@@ -12,30 +12,31 @@ class MustTwoFactor
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response) $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (
             filament()->auth()->check() &&
             !str($request->route()->getName())->contains('logout')
-        ){
+        ) {
             $breezy = filament('filament-breezy');
             $myProfileRouteName = 'filament.' . filament()->getCurrentPanel()->getId() . '.pages.my-profile';
+            $setupTwoFactorRouteName = 'filament.' . filament()->getCurrentPanel()->getId() . '.auth.setup-two-factor';
             $myProfileRouteParameters = [];
 
-            if (filament()->hasTenancy()){
-                if (!$tenantId = request()->route()->parameter('tenant')){
+            if (filament()->hasTenancy()) {
+                if (!$tenantId = request()->route()->parameter('tenant')) {
                     return $next($request);
                 }
                 $myProfileRouteParameters = ['tenant' => $tenantId];
-                $twoFactorRoute = route('filament.' . filament()->getCurrentPanel()->getId() . '.auth.two-factor',['tenant'=>$tenantId, 'next' => request()->getRequestUri()]);
+                $twoFactorRoute = route('filament.' . filament()->getCurrentPanel()->getId() . '.auth.two-factor', ['tenant' => $tenantId, 'next' => request()->getRequestUri()]);
             } else {
                 $twoFactorRoute = route('filament.' . filament()->getCurrentPanel()->getId() . '.auth.two-factor', ['next' => request()->getRequestUri()]);
             }
 
-            if ($breezy->shouldForceTwoFactor() && !$request->routeIs($myProfileRouteName)){
-                return redirect()->route($myProfileRouteName, $myProfileRouteParameters);
+            if ($breezy->shouldForceTwoFactor() && (!$request->routeIs($myProfileRouteName, $setupTwoFactorRouteName))) {
+                return redirect()->route($setupTwoFactorRouteName, $myProfileRouteParameters);
             } else if (filament()->auth()->user()->hasConfirmedTwoFactor() && !filament()->auth()->user()->hasValidTwoFactorSession()) {
                 return redirect($twoFactorRoute);
             }
